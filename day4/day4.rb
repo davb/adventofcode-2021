@@ -27,6 +27,7 @@ class Board
   def initialize
     @rows = []
     @columns = []
+    @won = false
   end
 
   def add_row r
@@ -42,8 +43,7 @@ class Board
   end
 
   def won?
-    @rows.any?{|r| r.all?(&:drawn?)} ||
-      @columns.any?{|r| r.all?(&:drawn?)}
+    @won ||= [@rows, @columns].any?{|l| l.any?{|r| r.all?(&:drawn?)}}
   end
 
   def score
@@ -57,7 +57,6 @@ class Board
 end
 
 draw = nil
-score = 0
 boards = []
 File.foreach("input.txt") do |l|
   row = l.scan(/\d+/).to_a.map(&:to_i)
@@ -70,17 +69,24 @@ File.foreach("input.txt") do |l|
   end
 end
 
-won = false
 draw.each do |d|
-  boards.each do |b|
+  remaining = boards.reject(&:won?)
+  break if remaining.empty?
+  remaining.each do |b|
     b.draw!(d)
-    if won = b.won?
-      puts "winning board:", b, "score:", b.score, "last draw:", d
-      score = b.score * d
+    if b.won?
+      if remaining.size == boards.size
+        # first board to win
+        puts "last winning board:", b, "score:", b.score, "last draw:", d
+        puts "part1:", b.score * d
+      end
+      if remaining.size == 1
+        # last remaining board just won
+        puts "last winning board:", b, "score:", b.score, "last draw:", d
+        puts "part2:", b.score * d
+      end
     end
-    break if won
   end
-  break if won
 end
 
-puts "part1:", score
+
